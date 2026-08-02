@@ -1,0 +1,120 @@
+const game=document.getElementById("game");
+const player=document.getElementById("player");
+const scoreText=document.getElementById("score");
+const gameOver=document.getElementById("gameOver");
+
+const lanes=[30,130,230];
+
+let lane=1;
+let jumping=false;
+let velocity=0;
+let playerY=50;
+
+let score=0;
+let speed=5;
+let playing=true;
+
+const obstacles=[];
+
+function updatePlayer(){
+    player.style.left=lanes[lane]+"px";
+    player.style.bottom=playerY+"px";
+}
+
+document.addEventListener("keydown",(e)=>{
+
+    if(!playing && e.key==="r"){
+        location.reload();
+    }
+
+    if(e.key==="ArrowLeft" && lane>0){
+        lane--;
+    }
+
+    if(e.key==="ArrowRight" && lane<2){
+        lane++;
+    }
+
+    if((e.key==="ArrowUp" || e.key===" ") && !jumping){
+        jumping=true;
+        velocity=14;
+    }
+});
+
+function spawnObstacle(){
+
+    let obs=document.createElement("div");
+    obs.className="obstacle";
+
+    let obsLane=Math.floor(Math.random()*3);
+
+    obs.style.left=(lanes[obsLane]-5)+"px";
+    obs.style.top="-50px";
+
+    game.appendChild(obs);
+
+    obstacles.push({
+        el:obs,
+        lane:obsLane,
+        y:-50
+    });
+}
+
+setInterval(()=>{
+    if(playing){
+        spawnObstacle();
+    }
+},900);
+
+function loop(){
+
+    if(!playing) return;
+
+    score++;
+    scoreText.innerHTML="Score: "+score;
+
+    if(score%500===0){
+        speed+=0.4;
+    }
+
+    if(jumping){
+        playerY+=velocity;
+        velocity-=0.7;
+
+        if(playerY<=50){
+            playerY=50;
+            jumping=false;
+        }
+    }
+
+    updatePlayer();
+
+    for(let i=obstacles.length-1;i>=0;i--){
+
+        let o=obstacles[i];
+
+        o.y+=speed;
+        o.el.style.top=o.y+"px";
+
+        if(o.y>600){
+            o.el.remove();
+            obstacles.splice(i,1);
+            continue;
+        }
+
+        if(
+            o.lane===lane &&
+            o.y>470 &&
+            o.y<560 &&
+            playerY<80
+        ){
+            playing=false;
+            gameOver.classList.remove("hidden");
+        }
+    }
+
+    requestAnimationFrame(loop);
+}
+
+updatePlayer();
+loop();
